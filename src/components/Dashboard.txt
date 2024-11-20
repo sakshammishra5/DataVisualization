@@ -1,0 +1,190 @@
+import React, { useState, useEffect } from 'react';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  LineChart, Line, ResponsiveContainer
+} from 'recharts';
+
+// Create basic Card components since we don't have shadcn/ui
+const Card = ({ children, className = '' }) => (
+  <div className={bg-white rounded-lg shadow-lg ${className}}>
+    {children}
+  </div>
+);
+
+const CardHeader = ({ children }) => (
+  <div className="px-6 py-4 border-b">
+    {children}
+  </div>
+);
+
+const CardTitle = ({ children }) => (
+  <h3 className="text-lg font-semibold">
+    {children}
+  </h3>
+);
+
+const CardContent = ({ children }) => (
+  <div className="p-6">
+    {children}
+  </div>
+);
+
+// Create basic Select components
+const Select = ({ value, onValueChange, children }) => (
+  <select 
+    value={value} 
+    onChange={(e) => onValueChange(e.target.value)}
+    className="px-3 py-2 border rounded w-32"
+  >
+    {children}
+  </select>
+);
+
+const SelectItem = ({ value, children }) => (
+  <option value={value}>{children}</option>
+);
+
+const Dashboard = () => {
+  const [selectedFeature, setSelectedFeature] = useState(null);
+  const [ageFilter, setAgeFilter] = useState('all');
+  const [genderFilter, setGenderFilter] = useState('all');
+  const [startDate, setStartDate] = useState('2022-04-09');
+  const [endDate, setEndDate] = useState('2022-04-10');
+  const [barChartData, setBarChartData] = useState([]);
+  const [lineChartData, setLineChartData] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch aggregated feature data
+  const fetchAggregatedData = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams({
+        startDate,
+        endDate,
+        age: ageFilter,
+        gender: genderFilter
+      });
+      
+      const response = await fetch(/api/analytics/aggregated-features?${params});
+      const data = await response.json();
+      setBarChartData(data);
+    } catch (error) {
+      console.error('Error fetching aggregated data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch time series data for selected feature
+  const fetchTimeSeriesData = async (feature) => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams({
+        feature,
+        startDate,
+        endDate,
+        age: ageFilter,
+        gender: genderFilter
+      });
+      
+      const response = await fetch(/api/analytics/feature-timeseries?${params});
+      const data = await response.json();
+      setLineChartData(data);
+    } catch (error) {
+      console.error('Error fetching time series data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch data when filters change
+  useEffect(() => {
+    fetchAggregatedData();
+  }, [startDate, endDate, ageFilter, genderFilter]);
+
+  // Fetch time series when feature is selected
+  useEffect(() => {
+    if (selectedFeature) {
+      fetchTimeSeriesData(selectedFeature);
+    }
+  }, [selectedFeature, startDate, endDate, ageFilter, genderFilter]);
+
+  return (
+    <div className="space-y-8 p-4">
+      {/* Filters */}
+      <div className="flex gap-4">
+        <Select value={ageFilter} onValueChange={setAgeFilter}>
+          <SelectItem value="all">All Ages</SelectItem>
+          <SelectItem value="15-25">15-25</SelectItem>
+          <SelectItem value=">25">&gt;25</SelectItem>
+        </Select>
+
+        <Select value={genderFilter} onValueChange={setGenderFilter}>
+          <SelectItem value="all">All</SelectItem>
+          <SelectItem value="Male">Male</SelectItem>
+          <SelectItem value="Female">Female</SelectItem>
+        </Select>
+
+        <input
+          type="date"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+          className="px-3 py-2 border rounded"
+        />
+        <input
+          type="date"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+          className="px-3 py-2 border rounded"
+        />
+      </div>
+
+      {/* Loading State */}
+      {loading && (
+        <div className="text-center py-4">Loading...</div>
+      )}
+
+      {/* Bar Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Feature Distribution</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart data={barChartData} onClick={(data) => data && setSelectedFeature(data.payload.feature)}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="feature" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="value" fill="#8884d8" />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      {/* Line Chart */}
+      {selectedFeature && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Time Trend - Feature {selectedFeature}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={400}>
+              <LineChart data={lineChartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="value" stroke="#8884d8" />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+};
+
+export default Dashboard;
