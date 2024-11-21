@@ -1,14 +1,17 @@
-import { useEffect } from 'react';
+import { useContext, useEffect } from 'react';
 import Dashboard from './components/Dashboard';
 import useAuth from './hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
+import { AppContext } from './context/AppContext';
+import Loader from './components/Loader';
 
 
 function App() {
-  const { isAuthenticated, loading } = useAuth()
+  const { isAuthenticated, authloading } = useAuth()
+  const {loading}=useContext(AppContext)
   const navigate = useNavigate()
   useEffect(() => {
-    if (!loading) {
+    if (!authloading) {
       if (isAuthenticated) {
         navigate('/')
       }
@@ -19,7 +22,7 @@ function App() {
   }, [isAuthenticated,loading])
 
 
-  return (<Dashboard />)
+  return (loading==false?<Loader/>:<Dashboard />)
 }
 
 export default App

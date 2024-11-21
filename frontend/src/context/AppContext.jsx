@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useState } from "react";
 
 
 export const AppContext = createContext();
@@ -8,6 +8,7 @@ export const AppContextProvider = ({ children }) => {
   const [gender, setGender] = useState("Male")
   const [dateRange, setDateRange] = useState([new Date(), new Date()]);
   const [chartData,setChartData]=useState(null)
+  const [loading,setLoading]=useState(false)
 
   const stateObj={
     isAuthenticated,
@@ -19,7 +20,9 @@ export const AppContextProvider = ({ children }) => {
     dateRange,
     setDateRange,
     chartData,
-    setChartData
+    setChartData,
+    loading,
+    setLoading
   }
 
   return (

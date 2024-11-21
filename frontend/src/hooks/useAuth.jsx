@@ -3,7 +3,7 @@ import { AppContext } from "../context/AppContext";
 
 const useAuth = () => {
     const { isAuthenticated, setIsAuthenticated } = useContext(AppContext);
-    const [loading, setLoading] = useState(true);
+    const [authloading, setAuthLoading] = useState(true);
 
     useEffect(() => {
         const sendAuthToken = async () => {
@@ -26,13 +26,13 @@ const useAuth = () => {
                 console.error('Error during authentication check:', error);
                 setIsAuthenticated(false);
             } finally {
-                setLoading(false);
+  setAuthLoading(false);
             }
         };
         sendAuthToken();
     }, [setIsAuthenticated]);
 
-    return { isAuthenticated, loading };
+    return { isAuthenticated, authloading };
 };
 
 export default useAuth;
